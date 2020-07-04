@@ -11,33 +11,102 @@
             crossorigin="anonymous"></script>
     <title>MoveShape</title>
     <style>
-        #shape {
+        .shapeUser {
+            width: 100px;
+            height: 100px;
+            background-color: red; 
+            cursor:move;
+        }
+        .shapeOther {
             width: 100px;
             height: 100px;
             background-color: red;
-            cursor: move;
         }
     </style>
 </head>
 <body>
-    <div id="shape"></div>
+    
     <script>
-        $shape = $("#shape");
-        var connection = new signalR.HubConnectionBuilder()
-                                    .withUrl('/shapeHub')
-                                    .build();
+        var id = Math.random()
+            .toString(16)
+            .toUpperCase()
+            .substr(2, 30);
+        console.log(id);
 
-        connection.on('shapeMoved', function(x, y) {
-            $shape.css({ left: x, top: y });
+        var userColor = getRandomColor();
+
+        //$shape = $("#shape");
+
+        //createShape(id, 150, 150, getRandomColor());
+
+        //$userShape = $("#" + id);
+
+       // $userShape.css("background-color", getRandomColor());
+  
+        var connection = new signalR.HubConnectionBuilder()
+            .withUrl('/shapeHub')
+            .build();
+
+        connection.on('shapeMoved', function (id, x, y, color) {   
+            //console.log(id, x, y, color);
+
+            var otherShape = document.getElementById(id);
+           
+            if (otherShape == null) {
+                otherShape = createShape(id, 150, 150, color,'shapeOther'); 
+            }
+            otherShape.setAttribute('style', 'background-color: ' + color + '; position: fixed; left: ' + x + 'px; top: ' + y +'px;');
+          
         });
 
         connection.start().then(
-            $shape.draggable({
+
+            console.log('start'),
+
+            createShape(id, 150, 150, userColor,'shapeUser'),
+
+            $userShape = $("#" + id),
+
+            $userShape.draggable({
                 drag: function () {
-                    connection.invoke("MoveShape", this.offsetLeft, this.offsetTop || 0);
+                    connection.invoke("MoveShape", this.id, this.offsetLeft, this.offsetTop || 0, userColor);
                 }
-            })
+            }),
+
+            //$shape.draggable({
+            //    drag: function () {
+            //        connection.invoke("MoveShape", this.offsetLeft, this.offsetTop || 0);
+            //    }
+            //})
         );
+
+        function getRandomColor() {
+            var letters = '0123456789ABCDEF';
+            var color = '#';
+            for (var i = 0; i < 6; i++) {
+                color += letters[Math.floor(Math.random() * 16)];
+            }
+            return color;
+        }
+
+        function createShape(id,x,y,color,classname) {
+
+            var userShape = document.createElement("div");
+            userShape.setAttribute('id', id);
+            userShape.setAttribute('width', '100px');
+            userShape.setAttribute('height', '100px');
+            //userShape.setAttribute('left', x);
+            //userShape.setAttribute("top", y); 
+            userShape.setAttribute('class', classname);
+            userShape.innerHTML = id; 
+            userShape.setAttribute('style', 'background-color: ' + color +  '; position: fixed; left: ' + x + 'px; top: ' + y + 'px;');
+            //var body = document.body;
+
+            document.body.appendChild(userShape);
+        }
+
     </script>
+
+
 </body>
 </html>
