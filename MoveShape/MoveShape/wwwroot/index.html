@@ -35,6 +35,13 @@
 
         var userColor = getRandomColor();
 
+        var x = Math.floor(Math.random() * 500);
+        var y = Math.floor(Math.random() * 500);
+
+        var userCh = getRandomChar();
+
+        console.log(x + " / " + y);
+
         //$shape = $("#shape");
 
         //createShape(id, 150, 150, getRandomColor());
@@ -47,15 +54,15 @@
             .withUrl('/shapeHub')
             .build();
 
-        connection.on('shapeMoved', function (id, x, y, color) {   
+        connection.on('shapeMoved', function (id, x, y, color, userChar) {   
             //console.log(id, x, y, color);
 
             var otherShape = document.getElementById(id);
            
             if (otherShape == null) {
-                otherShape = createShape(id, 150, 150, color,'shapeOther'); 
+                otherShape = createShape(id, x, y, color,'shapeOther',userChar); 
             }
-            otherShape.setAttribute('style', 'background-color: ' + color + '; position: fixed; left: ' + x + 'px; top: ' + y +'px;');
+            otherShape.setAttribute('style', 'font-size:45px; background-color: ' + color + '; position: fixed; left: ' + x + 'px; top: ' + y +'px;');
           
         });
 
@@ -63,22 +70,32 @@
 
             console.log('start'),
 
-            createShape(id, 150, 150, userColor,'shapeUser'),
 
-            $userShape = $("#" + id),
+            createShape(id, x, y, userColor, 'shapeUser', userCh),
+
+            $userShape = $("#" + id), 
+    
 
             $userShape.draggable({
                 drag: function () {
-                    connection.invoke("MoveShape", this.id, this.offsetLeft, this.offsetTop || 0, userColor);
+                  
+                    if (connection.connectionState == 'Connected')
+                        connection.invoke("MoveShape", this.id, this.offsetLeft, this.offsetTop || 0, userColor, userCh);
                 }
             }),
 
-            //$shape.draggable({
-            //    drag: function () {
-            //        connection.invoke("MoveShape", this.offsetLeft, this.offsetTop || 0);
-            //    }
-            //})
+            $userShape.click(function ()
+                {
+                console.log('hello' + this.offsetLeft);
+                console.log('hello' + $("div[id][id!='" + this.id + "']")[0].id);
+                var otherShapeId = ''; 
+                    if (connection.connectionState == 'Connected')
+                        connection.invoke("FireShape", this.id, this.offsetLeft, this.offsetTop || 0, otherShapeId);
+                }
+            ),
+             
         );
+
 
         function getRandomColor() {
             var letters = '0123456789ABCDEF';
@@ -89,7 +106,15 @@
             return color;
         }
 
-        function createShape(id,x,y,color,classname) {
+        function getRandomChar() {
+            var letters = 'ABCDEFGHJKLMNOPRSTUYWXVZ';
+
+            var letter= letters[Math.floor(Math.random() * 16)];
+        
+            return letter;
+        }
+
+        function createShape(id,x,y,color,classname,charname) {
 
             var userShape = document.createElement("div");
             userShape.setAttribute('id', id);
@@ -98,8 +123,8 @@
             //userShape.setAttribute('left', x);
             //userShape.setAttribute("top", y); 
             userShape.setAttribute('class', classname);
-            userShape.innerHTML = id; 
-            userShape.setAttribute('style', 'background-color: ' + color +  '; position: fixed; left: ' + x + 'px; top: ' + y + 'px;');
+            userShape.innerHTML = charname; 
+            userShape.setAttribute('style', 'font-size: 45px; background-color: ' + color +  '; position: fixed; left: ' + x + 'px; top: ' + y + 'px;');
             //var body = document.body;
 
             document.body.appendChild(userShape);
